@@ -26,10 +26,11 @@ class CreateVisitsTable extends Migration
             $table->integer('priority')->default(0);
             $table->integer('approved_by')->nullable();
             $table->dateTime('approved_at')->nullable();
-            $table->string('status', 15)->default('active');
-            $table->boolean('is_emergency_task')->default(0);
+            $table->string('status', 25)->default('waiting_for_approval');
             $table->string('visit_note', 200)->nullable();
             $table->string('comments', 200)->nullable();
+            $table->dateTime('started_at')->nullable();
+            $table->dateTime('completed_at')->nullable();
             $table->timestamps();
             $table->authors();
         });

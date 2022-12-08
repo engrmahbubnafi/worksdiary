@@ -10,9 +10,11 @@ use App\Models\Company;
 use App\Models\CompanyUser;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\EmergencyVisit;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserZone;
+use App\Models\Visit;
 use App\Models\Zone;
 use App\Transformers\UserTransformer;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +70,9 @@ class UserController extends Controller
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name_mobile_email')
                     ->title('User')
                     ->addClass('text-center'),
@@ -106,7 +111,7 @@ class UserController extends Controller
                 }',
             ]);
 
-        return view('users.index', compact('html', 'companies', 'lists'));
+        return view('users.index', compact('html', 'companies', 'lists', 'companyId'));
     }
 
     /**
@@ -187,12 +192,11 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request, Company $company)
     {
-        // dd($request);
-        // Hash the password
-        $validated['password'] = Hash::make($request->password);
 
         // Store validated data into variable
         $data = $request->validated();
+
+        $data['password'] = Hash::make($request->password);
 
         // Set this company ID
         $data['company_id'] = $company->id;
@@ -208,6 +212,12 @@ class UserController extends Controller
         if ($request->has('zone_ids')) {
             $zoneIds = $request->get('zone_ids');
             unset($data['zone_ids']);
+        }
+
+        if ($request->exists('email_verified_at') && $request->has('email_verified_at')) {
+            if (!$request->user()->isAdministrator()) {
+                $data['email_verified_at'] = null;
+            }
         }
 
         // Create the user if successful, otherwise throw error(s)
@@ -262,13 +272,78 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show specific user.
      *
-     * @param User $user
-     * @param int $companyId
+     * @param  \App\Models\Company  $company
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function edit(Company $company, User $user)
+    public function show(Request $request, $companyId, $userId)
+    {
+        if (!$companyId) {
+            $companyId = $request->user()->company_id;
+        }
+
+        $result = $this->checkValidity($companyId);
+
+        if ($result) {
+            return $result;
+        }
+
+        $totalVisit = Visit::join('users as assaigned', 'assaigned.id', '=', 'visits.assign_to')
+            ->where(function ($q) use ($userId) {
+                $q->where('visits.assign_to', $userId)
+                    ->orWhere('visits.created_by', $userId)
+                    ->orWhere('assaigned.supervisor_id', $userId);
+            })
+            ->count();
+
+        $totalEmergencyTask = EmergencyVisit::join('users as assaigned', 'assaigned.id', '=', 'emergency_tasks.assign_to')
+            ->where(function ($q) use ($userId) {
+                $q->where('emergency_tasks.assign_to', $userId)
+                    ->orWhere('emergency_tasks.created_by', $userId)
+                    ->orWhere('assaigned.supervisor_id', $userId);
+            })
+            ->count();
+
+        $user = User::with(
+            [
+                'zones' => function ($q) {
+                    $q->select('zones.id', 'zones.name');
+                },
+                'companies' => function ($q) {
+                    $q->select('companies.id', 'companies.name');
+                },
+            ]
+        )
+            ->join('companies', 'companies.id', 'users.company_id')
+            ->join('roles', 'roles.id', 'users.role_id')
+            ->join('departments', 'departments.id', 'users.department_id')
+            ->join('designations', 'designations.id', 'users.designation_id')
+            ->leftJoin('users as supervisor', 'supervisor.id', 'users.supervisor_id')
+            ->where('companies.id', $companyId)
+            ->select(
+                'users.*',
+                'companies.name as company_name',
+                'roles.name as role_name',
+                'roles.is_editable as is_editable',
+                'departments.name as department_name',
+                'designations.name as designation_name',
+                'supervisor.name as supervisor_name'
+            )
+            ->findOrFail($userId);
+
+        return view('users.show', compact('companyId', 'user', 'totalVisit', 'totalEmergencyTask'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Company  $company
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, Company $company, User $user)
     {
         $result = $this->checkValidity($company->id);
 
@@ -277,11 +352,10 @@ class UserController extends Controller
         }
         // Show all roles only if the user creating the new user is an administrator
         // Otherwise show only those roles which are not editable and deletable
-        if ($user->isAdministrator()) {
+        if ($request->user()->isAdministrator()) {
             $roles = Role::pluck('name', 'id');
         } else {
-            $roles = Role::where('is_deletable', '<>', 0)
-                ->where('is_editable', '<>', 0)
+            $roles = Role::deletable()
                 ->pluck('name', 'id');
         }
 
@@ -291,7 +365,6 @@ class UserController extends Controller
         $currentCompany = $companiesObj->get($company->id);
         $otherCompanies = $companiesObj->except($company->id);
 
-        //
         $selectedOtherCompaniesForUser = CompanyUser::where('company_id', '<>', $company->id)
             ->where('user_id', $user->id)
             ->pluck('company_id', 'company_id'); //check by key not value
@@ -316,23 +389,7 @@ class UserController extends Controller
         $selectedUserZonesIds = UserZone::where('user_zones.user_id', $user->id)
             ->pluck('zone_id');
 
-        //dd($selectedUserZonesIds);
-
-        return view(
-            'users.edit',
-            compact(
-                'user',
-                'roles',
-                'departments',
-                'otherCompanies',
-                'selectedOtherCompaniesForUser',
-                'designations',
-                'supervisors',
-                'currentCompany',
-                'zones',
-                'selectedUserZonesIds',
-            )
-        );
+        return view('users.edit', compact('user', 'roles', 'departments', 'otherCompanies', 'selectedOtherCompaniesForUser', 'designations', 'supervisors', 'currentCompany', 'zones', 'selectedUserZonesIds'));
     }
 
     /**
@@ -345,12 +402,12 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, Company $company, User $user)
     {
-
         // Store validated data into variable
         $data = $request->validated();
 
-        //block for security purpose
-        //$data['company_id'] = $companyId;
+        if ($request->exists('password') && $request->has('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
 
         // Get selected company ID
         $companyIds = [];
@@ -367,7 +424,19 @@ class UserController extends Controller
             unset($data['zone_ids']);
         }
 
+        if (!$request->user()->isAdministrator() && $user->id == auth()->id()) {
+            $data['role_id'] = $user->role_id;
+            $data['supervisor_id'] = $user->supervisor_id;
+        }
+
+        if ($request->exists('email_verified_at') && $request->has('email_verified_at')) {
+            if (!$request->user()->isAdministrator()) {
+                $data['email_verified_at'] = null;
+            }
+        }
+
         DB::beginTransaction();
+
         try {
             $user->update($data);
 
@@ -526,4 +595,5 @@ class UserController extends Controller
             })
             ->make(true);
     }
+
 }

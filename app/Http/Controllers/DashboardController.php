@@ -2,20 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Visit;
+use App\Models\EmptyObj;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 class DashboardController extends Controller
 {
-    public function index()
+    private $companyId;
+
+    private function getUser()
     {
-        // $user = Auth::user();
-        // $role = User::join('roles', 'users.role_id', 'roles.id')
-        //     ->select('roles.name')
-        //     ->where('roles.id', $user->role_id)
-        //     ->get('name');
+        $users = User::select(
+            'users.status',
+            DB::raw('COUNT(users.id) as total')
+        )
+            ->where('users.company_id', $this->companyId)
+            ->groupBy('users.status')
+            ->get();
+    }
 
-        // dump($user->name);
-        // dd($role);
+    private function getVisits($request)
+    {
+        $vists = Visit::where(function ($q) use ($request) {
+            $q->where('visits.assign_to', $request->user()->id)
+                ->orWhere('visits.created_by', $request->user()->id);
+        })
+            ->select(
+                'visits.status',
+                DB::raw('COUNT(visits.id) as total')
+            )
+            ->where('company_id', $this->companyId)
+            ->groupBy('visits.status')
+            ->get();
+    }
 
-        //dd($tokenObj=$user->createToken($request->device_name););
-        return view('dashboard.index');
+    public function index(Request $request, $companyId = null)
+    {
+        if (!$companyId) {
+            $companyId = $request->user()->company_id;
+            $this->companyId = $companyId;
+        }
+
+        // Generate tab for each company.
+        $lists = Str::generateCompanyTab(routeName: 'dashboard');
+
+        return view('dashboard.index', compact('lists', 'companyId'));
     }
 }

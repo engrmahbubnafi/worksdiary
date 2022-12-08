@@ -40,6 +40,9 @@ class AreaController extends Controller
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center'),

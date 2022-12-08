@@ -2,31 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Throwable;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Zone;
-use App\Models\Visit;
-use App\Models\Company;
-use App\Models\EmptyObj;
 use App\Enum\VisitStatus;
-use App\Models\CompanyUnit;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\EmergencyVisit;
-use App\Models\VisitObjective;
-use Yajra\DataTables\Html\Column;
-use Illuminate\Support\Collection;
-use Yajra\DataTables\Html\Builder;
-use App\Transformers\VisitTransformer;
-use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Visit\StoreVisitRequest;
 use App\Http\Requests\Visit\UpdateVisitRequest;
+use App\Models\Company;
+use App\Models\CompanyUnit;
+use App\Models\EmptyObj;
+use App\Models\Form;
+use App\Models\User;
+use App\Models\Visit;
+use App\Models\VisitObjective;
+use App\Models\Zone;
+use App\Transformers\VisitTransformer;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Throwable;
+use Yajra\DataTables\Facades\DataTables;
+use Yajra\DataTables\Html\Builder;
+use Yajra\DataTables\Html\Column;
 
 class VisitController extends Controller
 {
-
 
     /**
      * Display a listing of the resource.
@@ -50,19 +49,34 @@ class VisitController extends Controller
             return $result;
         }
         if ($request->ajax()) {
+
+            if ($request->exists('supervisor')) {
+                $supervisor = (int) $request->get('supervisor');
+                if ($supervisor) {
+                    $request->merge(['supervisor_id' => $request->user()->id]);
+                } else {
+                    $request->merge(['supervisor_id' => $request->user()->supervisor_id]);
+                }
+            }
+
             //dump($request->all('columns'));
             return DataTables::eloquent(
                 Visit::getVisitsEloquentObj($request->merge(['company_id' => $companyId]))
+                    ->orderBy('visits.date_for')
+                    ->orderBy('visits.created_at')
             )
-                ->setTransformer(new VisitTransformer(EmergencyVisit::nonEditableArray()))
+                ->setTransformer(new VisitTransformer(Visit::nonEditableArray()))
                 ->filterColumn('date_for', function ($query, $value) {
 
                     $segments = Str::of($value)->split('/\|/');
 
-                    $min = Carbon::parse($segments[0]);
-                    $max = Carbon::parse($segments[1]);
+                    if (!empty($segments[0]) && !empty($segments[1])) {
 
-                    $query->whereBetween('visits.date_for', [$min, $max]);
+                        $min = Carbon::parse($segments[0]);
+                        $max = Carbon::parse($segments[1]);
+
+                        $query->whereBetween('visits.date_for', [$min, $max]);
+                    }
                 })
                 ->filterColumn('status', function ($query, $value) {
                     $query->where('visits.status', $value);
@@ -73,9 +87,16 @@ class VisitController extends Controller
         // Generate tab for each company.
         $lists = Str::generateCompanyTab(routeName: 'visits.index');
 
+        $supervisors = [
+            '' => 'Select Supervisor',
+            '1' => 'Me as a Supervisor',
+            '0' => 'My Supervisor'
+        ];
+
         // Build columns.
         $html = $builder
             ->columns([
+
                 Column::make('name')
                     ->title('Visit Objective')
                     ->addClass('text-center')
@@ -104,6 +125,17 @@ class VisitController extends Controller
                     ->searchable(true)
                     ->hidden(),
 
+                Column::make('created_at')
+                    ->title('Created')
+                    ->addClass('text-center')
+                    ->searchable(false),
+
+                Column::make('created_by')
+                    ->name('created.name')
+                    ->title('Created By')
+                    ->addClass('text-center')
+                    ->searchable(false),
+
                 Column::make('action')
                     ->title('Action')
                     ->addClass('text-center')
@@ -112,19 +144,23 @@ class VisitController extends Controller
             ])
             ->parameters([
                 'pageLength' => 25,
+                'order' => [], /* No ordering applied by DataTables during initialisation */
                 'drawCallback' => 'function() {
                     tooltipViewerFn();
                     handleSearchDatatable();
                 }',
+                "aoSearchCols" => [
+                    '', //0[name]
+                    '', //1[unit]
+                    '', //2[assign_to]
+                    '', //3[date_for]
+                    [
+                        "sSearch" => VisitStatus::WaitingForApproval->value //4[status]
+                    ],
+                ],
             ]);
-        // ->ajax([
-        //     'url' => route('visits.index'),
-        //     'data' => 'function(d) {
-        //          d.status = "waiting";
-        //     }',
-        // ]);
 
-        return view('visits.index', compact('html', 'lists', 'companyId'));
+        return view('visits.index', compact('html', 'lists', 'companyId', 'supervisors'));
     }
 
     /**
@@ -172,20 +208,28 @@ class VisitController extends Controller
     {
         try {
             // Store validated data into variable.
-            $data = $request->validated();
+            $validated = $request->validated();
 
-            // Set this company ID.
-            $data['company_id'] = $company->id;
+            $companyUnit = CompanyUnit::where('id', $validated['company_unit_id'])
+                ->select('unit_id', 'company_id', 'zone_id')
+                ->first();
 
-            if (is_array($data['name'])) {
-                $data['name'] = Arr::join($data['name'], ',');
+            $data = array_merge($validated, $companyUnit->toArray());
+
+            $data['name'] = Arr::join($data['objectives'], ',');
+
+            if (!empty($data['assign_to'])) {
+                $data['status'] = VisitStatus::Approved->value; //Though assine tag is must, so as a supervisor, he is the only approver for that visit
+            } else {
+                $data['assign_to'] = $request->user()->id;
+                if ($request->user()->supervisor_id) {
+                    $data['status'] = VisitStatus::WaitingForApproval->value;
+                } else {
+                    $data['status'] = VisitStatus::Approved->value; //he has no supervisor
+                }
             }
-            $data['status'] = VisitStatus::WaitingForApproval->value;
 
-            $unit_id = CompanyUnit::where('id', $data['company_unit_id'])->value('unit_id');
-            $data['unit_id'] = $unit_id;
-            // Save validated data.
-            Visit::create($data);
+            Visit::create(Arr::except($data, ['objectives']));
 
             return redirect()->route('visits.index', auth()->user()->company_id == $company->id ? null : $company->id)
                 ->with('flash_success', 'Visit created successfully!');
@@ -226,7 +270,7 @@ class VisitController extends Controller
 
         $currentCompany = (new EmptyObj())->setRawAttributes([
             'id' => $companyId,
-            'title' => $currentCompanyName
+            'title' => $currentCompanyName,
         ]);
 
         $visitObjectives = VisitObjective::getTitles($request->merge(['company_id' => $companyId]))
@@ -259,14 +303,22 @@ class VisitController extends Controller
     {
         try {
             // Store validated data into variable.
-            $data = $request->validated();
+            $validated = $request->validated();
+
+            $companyUnit = CompanyUnit::where('id', $validated['company_unit_id'])
+                ->select('unit_id', 'company_id', 'zone_id')
+                ->first();
+
+            $data = array_merge($validated, $companyUnit->toArray());
             //dd($data);
-            if (is_array($data['name'])) {
-                $data['name'] = Arr::join($data['name'], ',');
+            $data['name'] = Arr::join($data['objectives'], ',');
+
+            if (empty($data['assign_to'])) {
+                $data['assign_to'] = $request->user()->id;
             }
 
             // Update validated data into database.
-            $visit->update($data);
+            $visit->update(Arr::except($data, ['objectives']));
 
             return redirect()->route('visits.index', auth()->user()->company_id == $company->id ? null : $company->id)
                 ->with('flash_success', "Visit updated successfully!");
@@ -276,6 +328,25 @@ class VisitController extends Controller
                 'error' => [$th->getMessage()],
             ]);
         }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param Visit $zone
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request, $companyId, $id)
+    {
+        $visit = Visit::getVisit($request->merge(['id' => $id]));
+
+        $forms = Form::where('company_id', $visit->company_id)
+            ->where('unit_type_id', $visit->unit_type_id)
+            ->pluck('name', 'id');
+
+        $formId = $request->get('formId');
+
+        return view('visits.show', compact('companyId', 'visit', 'forms', 'formId'));
     }
 
     /**
@@ -301,7 +372,6 @@ class VisitController extends Controller
         }
     }
 
-
     /**
      * Ajax Get unit visitors according to unit.
      *
@@ -310,7 +380,6 @@ class VisitController extends Controller
      */
     public function getUnitVisitors(Request $request): Collection
     {
-
 
         return User::unitVisitors($request);
     }

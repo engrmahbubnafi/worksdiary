@@ -23,22 +23,21 @@ class UpdateEmergencyVisitRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'name' => 'required',
-            'date_for' => 'required|date',
-            'company_unit_id' => 'required|integer',
-            'status' => 'required',
-            'assign_to' => 'required|integer',
-            'unit_type_id' => 'required|integer',
-            'zone_id' => 'sometimes|integer',
-            'visit_note' => 'sometimes'
-        ];
-    }
 
-    public function messages()
-    {
-        return [
-            'name.required' => 'The task objective field is required'
+
+        $data = [
+            'objectives' => 'required|array',
+            'date_for' => 'required|date',
+            'unit_type_id' => 'required|integer|exists:unit_types,id',
+            'company_unit_id' => 'required|integer|exists:company_units,id',
+            'status' => 'required',
+            'task_note' => 'sometimes'
         ];
+
+        if (!empty($this->assign_to)) {
+            $data['assign_to'] =  'integer';
+        }
+
+        return $data;
     }
 }

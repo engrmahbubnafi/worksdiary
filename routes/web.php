@@ -48,6 +48,9 @@ Route::group([
         'verified',
     ],
 ], function () {
+    Route::match(['get', 'put'], 'roles/{role}/clone', [RoleController::class, 'clone'])
+        ->name('roles.clone');
+
     Route::resource('roles', RoleController::class)
         ->except(['show']);
 
@@ -141,6 +144,7 @@ Route::group([
         ->name('visit-objectives.index');
     Route::get('visit-objectives/create/{company?}', [VisitObjectiveController::class, 'create'])
         ->name('visit-objectives.create');
+
     Route::resource('companies.visit-objectives', VisitObjectiveController::class)->except(['index', 'create']);
 
     Route::get('visits/index/{company?}', [VisitController::class, 'index'])
@@ -161,10 +165,10 @@ Route::group([
     // Route::resource('visits', VisitController::class)->except(['create']);
 });
 
-Route::group(['middleware' => ['auth']], function () {
-    //URL::defaults(['dashboardUrl' => 'home']); set to app service provider
-    Route::get('/{dashboardUrl}', [DashboardController::class, 'index'])
-        ->where(['dashboardUrl' => 'dashboard|home|administrator|admin'])
+Route::group(['middleware' => ['auth', 'verified']], function () {
+    //URL::defaults(['dashboardUrl' => 'dashboard']); set to app service provider
+    Route::get('/{dashboardUrl}/{company?}', [DashboardController::class, 'index'])
+        ->where(['dashboardUrl' => 'dashboard|administrator|admin'])
         ->name('dashboard');
 
     Route::get('systems-role-update', [RoleController::class, 'systemsRoleUpdate'])
@@ -173,6 +177,9 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('users/company/select/{routeTo}', [UserController::class, 'selectCompany'])
         ->name('users.select_company');
+
+    Route::post('verify-email-as-sys-admin/{user}', [UserController::class, 'verifyEmailAsSysAdmin'])
+        ->name('ajax.user.verify_email_as_sys_admin');
 
     Route::get('get-reference-values/{formId}/{fieldId?}', [FieldController::class, 'getReferenceValues'])
         ->name('ajax.fields.reference');
@@ -215,15 +222,15 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::post('get-units-by-zone', [VisitController::class, 'getUnitsByZone'])
         ->name('ajax.visit.getUnitsByZone');
+
+    Route::post('get-search-unit-list', [UnitController::class, 'getSearchUnitList'])
+        ->name('ajax.unitSearch.unitList');
+
+    Route::post('get-search-company-unit-list', [UnitController::class, 'getSearchCompanyUnits'])
+        ->name('ajax.unitSearch.companyUnits');
+
+    Route::get('get-upazila/{district_id?}', [AjaxController::class, 'getUpazilaData']);
 });
-
-Route::post('get-search-unit-list', [UnitController::class, 'getSearchUnitList'])
-    ->name('ajax.unitSearch.unitList');
-
-Route::post('get-search-company-unit-list', [UnitController::class, 'getSearchCompanyUnits'])
-    ->name('ajax.unitSearch.companyUnits');
-
-Route::get('get-upazila/{district_id?}', [AjaxController::class, 'getUpazilaData']);
 
 if (app()->isLocal()) {
     require __DIR__ . '/demo.php';

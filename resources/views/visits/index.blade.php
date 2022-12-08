@@ -20,29 +20,44 @@
     </x-slot>
 
     <x-common-for-index :html="$html">
-        <x-tab-comp :lists="$lists">
+        <x-tab-comp :lists="$lists"> 
+                     
+            <div class="input-group input-group-solid w-200px">
+                <input class="form-control form-control-solid" placeholder="Pick Visit Date For"
+                id="kt_daterangepicker" autocomplete="off" />
+                <a href="javascript:void(0)" class="input-group-text" id="cancelCalelder"></a>
+            </div>
 
-            <!--begin::Daterangepicker-->
-           <input class="form-control form-control-solid w-100 mw-250px" placeholder="Pick date range" id="kt_daterangepicker" />
-           <!--end::Daterangepicker-->
-           <!--begin::Filter-->
-           <div class="w-250px">
-               <!--begin::Select2-->
-               {{ Form::select('status', App\Enum\VisitStatus::array(), null, [
+            
+            <!--begin::Filter-->
+            <div class="w-200px">
+                <!--begin::Select2-->
+                {{ Form::select('status', App\Enum\VisitStatus::array(), App\Enum\VisitStatus::WaitingForApproval->value, [
                     'class' => 'form-select form-select-solid',
-                    'data-kt-select2'=>'true',
-                    'data-placeholder'=>'Select option',
-                    'id'=>'visitStatus',
-                    'data-allow-clear'=>'true',
+                    'data-kt-select2' => 'true',
+                    'data-placeholder' => 'Select option',
+                    'id' => 'visitStatus',
+                    'data-allow-clear' => 'true',
                 ]) }}
-               <!--end::Select2-->
-           </div>
-          
-             <!--begin::search -->
-            <div class="d-flex align-items-center position-relative my-1">
+                <!--end::Select2-->
+            </div>
+
+            <div  class="w-200px">
+                {{ Form::select('supervisor', $supervisors, request()->get('supervisor'), [
+                    'class' => 'form-select form-select-solid',
+                    'data-kt-select2' => 'true',
+                    'data-placeholder' => 'Select Supervisor',
+                    'id' => 'supervisor',
+                    'data-allow-clear' => 'true',
+                ]) }}
+            </div>
+
+            <!--begin::search -->
+            <div class="d-flex align-items-center position-relative w-200px">
                 <!--begin::Svg Icon | path: icons/duotune/general/gen021.svg-->
                 <span class="svg-icon svg-icon-1 position-absolute ms-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none">
                         <rect opacity="0.5" x="17.0365" y="15.1223" width="8.15546" height="2" rx="1"
                             transform="rotate(45 17.0365 15.1223)" fill="currentColor"></rect>
                         <path
@@ -52,9 +67,9 @@
                 </span>
                 <!--end::Svg Icon-->
                 <input type="text" data-kt-table-filter="search"
-                    class="form-control form-control-solid w-250px ps-14" placeholder="Search">
-            </div> 
-            <!--end::search -->           
+                    class="form-control form-control-solid ps-14" placeholder="Search">
+            </div>
+            <!--end::search -->
 
         </x-tab-comp>
     </x-common-for-index>
@@ -69,6 +84,7 @@
             }
 
             $("#kt_daterangepicker").daterangepicker({
+                autoUpdateInput:false,
                 startDate: start,
                 endDate: end,
                 ranges: {
@@ -77,22 +93,56 @@
                     "Last 7 Days": [moment().subtract(6, "days"), moment()],
                     "Last 30 Days": [moment().subtract(29, "days"), moment()],
                     "This Month": [moment().startOf("month"), moment().endOf("month")],
-                    "Last Month": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "Last Month": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf(
+                        "month")]
                 }
             }, cb);
 
             cb(start, end);
 
             $('#kt_daterangepicker').on('apply.daterangepicker', function(ev, picker) {
-                console.log(ev);
-                window.LaravelDataTables["dataTableBuilder"].column(3).search(picker.startDate.format('YYYY-MM-DD')+'|'+picker.endDate.format('YYYY-MM-DD')).draw();
+                $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'))
+                .next('#cancelCalelder')
+                .html('<span>x</span>');
+
+                window.LaravelDataTables["dataTableBuilder"].column(3).search(picker.startDate.format('YYYY-MM-DD') +
+                    '|' + picker.endDate.format('YYYY-MM-DD')).draw();
+            });
+
+            $('#kt_daterangepicker').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('')
+                .next('#cancelCalelder')
+                .html('');
+                window.LaravelDataTables["dataTableBuilder"].column(3).search("").draw();
+            });
+
+            $(document).on('click','#cancelCalelder span', function(ev, picker) {
+                
+                $(this)
+                .parent('#cancelCalelder')
+                .html('')
+                .prev('#kt_daterangepicker')
+                .val("");
+
+                window.LaravelDataTables["dataTableBuilder"].column(3).search("").draw();               
             });
 
 
-            $(document).on('change','#visitStatus',function(e){
+            $(document).on('change', '#visitStatus', function(e) {
                 window.LaravelDataTables["dataTableBuilder"].column(4).search(e.currentTarget.value).draw();
+            });
+
+            
+            var url="{{ route('visits.index',auth()->user()->company_id == $companyId ? null : $companyId) }}"
+
+            $('#supervisor').on('select2:select',function(e){
+                window.location.href=url+'?supervisor='+e.currentTarget.value;
+            });
+
+            $('#supervisor').on('select2:clear',function(e){
+                window.location.href=url;
             });    
-          
+
         </script>
     @endpush
 </x-app-layout>

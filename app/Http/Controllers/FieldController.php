@@ -33,9 +33,7 @@ class FieldController extends Controller
         $html = $builder
             ->columns([
                 Column::make('id')
-                    ->title('ID')
-                    ->addClass('text-center')
-                    ->searchable(false),
+                    ->visible(false),
 
                 Column::make('field_group_name')
                     ->title('Field Group')

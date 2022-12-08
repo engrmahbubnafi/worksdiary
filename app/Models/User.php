@@ -172,7 +172,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 'roles.name as role_name'
             )
             ->active()
-            //->where('users.supervisor_id', '<>', null)
+            ->where('users.supervisor_id', $request->user()->id)
             ->where('users.company_id', $companyId)
             ->where('user_zones.zone_id', $zoneId)
             ->get();

@@ -93,6 +93,7 @@
                                         {{ $message }}
                                     </div>
                                 @enderror
+
                                 <label class="form-check form-check-custom form-check-solid">
                                     <input id="checkboxCustom3" class="form-check-input h-20px w-20px" type="checkbox"
                                         name="is_deletable" @checked($role->is_deletable == 1) />
@@ -103,81 +104,95 @@
                                         {{ $message }}
                                     </div>
                                 @enderror
+
                             </div>
                         </div>
                     </div>
                 @endif
 
-                @php
-                    $controllersArray = array_chunk($permission, 4, true);
-                @endphp
+                    @php
+                        $chunkedArr = $permissions->chunk(4);
+                    @endphp
 
-                <div class="mb-7 text-center">
-                    <h1 class="mb-3">Permission Settings</h1>
-                </div>
-
-                <div class="fv-row mb-5">
-                    <div class="d-flex flex-stack">
-                        <div class="d-flex align-items-center">
-                            <label class="form-check form-check-custom form-check-solid me-10">
-                                <input id="checkoruncheck" class="form-check-input h-20px w-20px" type="checkbox"
-                                    checked="checked" />
-                                <span class="form-check-label fw-bold">Check/Uncheck All</span>
-                            </label>
-                        </div>
+                    <div class="mb-7 text-center">
+                        <h1 class="mb-3">Permission Settings</h1>
                     </div>
-                </div>
 
-                @foreach ($controllersArray as $elements)
-                    <div class="mb-15 fv-row">
-                        @foreach ($elements as $key => $elements)
-                            <div class="d-flex align-items-center js-controller">
+                    <div class="fv-row mb-5">
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex align-items-center">
                                 <label class="form-check form-check-custom form-check-solid me-10">
-                                    <input id="checkoruncheck"
-                                        class="form-check-input h-20px w-20px js-parent-{{ $key }}"
-                                        type="checkbox" checked="checked" name="permission_ids[]"
-                                        value="{{ array_search($key, $parents) }}"
-                                        onchange="permissionSelectDeselectChild(this)" style="margin-bottom: 5px;" />
-                                    <span class="form-check-label fw-bold" style="padding-bottom: 5px;">
-                                        {{ Str::replace('Controller', 'Management', Str::camelToSpace($key)) }}
-                                    </span>
+                                    <input id="checkoruncheck" class="form-check-input h-20px w-20px" type="checkbox"
+                                        checked="checked" />
+                                    <span class="form-check-label fw-bold">Check/Uncheck All</span>
                                 </label>
                             </div>
-
-                            <div class="d-flex align-items-center js-action-wraper" style="padding: 10px;">
-                                @foreach ($elements as $key2 => $element)
-                                    <div class="js-actions">
-                                        @if (array_key_exists($element, $custom_action_arr))
-                                            <label class="form-check form-check-custom form-check-solid me-10">
-                                                <input id="checkoruncheck"
-                                                    class="form-check-input h-20px w-20px {{ $key }}"
-                                                    type="checkbox" checked="checked" name="permission_ids[]"
-                                                    value="{{ array_search($key, $parents) }}"
-                                                    onchange="permissionSelectParent('{{ $key }}')"
-                                                    style="margin-bottom: 5px;" />
-                                                <span class="form-check-label fw-bold" style="padding-bottom: 5px;">
-                                                    {{ $custom_action_arr[$element] }}
-                                                </span>
-                                            </label>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endforeach
+                        </div>
                     </div>
-                @endforeach
-                <div class="text-center">
+
+                    @foreach ($chunkedArr as $chunkObj)
+                        <div class="mb-15 fv-row">
+                            @foreach ($chunkObj as $key => $parentsObj)
+                                <div class="d-flex align-items-center js-controller">
+                                    <label class="form-check form-check-custom form-check-solid me-10">
+                                        <input id="checkoruncheck"
+                                            class="form-check-input h-20px w-20px js-parent-{{ $key }}"
+                                            type="checkbox" @if($ownPermissions->has($parentsObj->id)) checked="checked" @endif name="permission_ids[]"
+                                            value="{{ $parentsObj->id }}"
+                                            onchange="permissionSelectDeselectChild(this)" style="margin-bottom: 5px;" />
+                                        <span class="form-check-label fw-bold" style="padding-bottom: 5px;">
+                                            {{ str()->of($parentsObj->name)->replace('Controller', 'Management')->kebab()->title() }}
+                                        </span>
+                                    </label>
+                                </div>
+
+                                @if($parentsObj->children->count())
+                                    <div class="d-flex align-items-center js-action-wraper" style="padding: 10px;">
+                                        @foreach ($parentsObj->children as $key2 => $childObj)
+                                            @php
+                                                if($custom_action_arr->has($childObj->name)){
+                                                    $customActionObj=$custom_action_arr->get($childObj->name);
+                                                    $class=$customActionObj->class;
+                                                    $link=$customActionObj->link;
+                                                    $actionName= $customActionObj->title;
+                                                }else{
+                                                    $actionName=$childObj->name;
+                                                    $class=null;
+                                                    $link=null;
+                                                }
+                                            @endphp
+
+                                            <div class="js-actions {{ $class }}">
+                                                <label class="form-check form-check-custom form-check-solid me-10">
+                                                    <input id="checkoruncheck"
+                                                        class="form-check-input h-20px w-20px {{ $key }} {{ $childObj->name }}"
+                                                        type="checkbox" @if($ownPermissions->has($childObj->id)) checked="checked" @endif name="permission_ids[]"
+                                                        value="{{ $childObj->id }}"
+                                                        onchange="permissionSelectParent('{{ $key }}'), togetherSelect(this,'{{ $link }}')"
+                                                        style="margin-bottom: 5px;" />
+                                                    <span class="form-check-label fw-bold" style="padding-bottom: 5px;">
+                                                        {{  str()->of($actionName)->kebab()->title() }}
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endforeach
+
                     <button type="submit" class="btn btn-primary">
                         <span class="indicator-label">Submit</span>
                         <span class="indicator-progress">Please wait...
                             <span class="spinner-border spinner-border-sm ms-2 align-middle"></span>
                         </span>
                     </button>
-                </div>
+
                 </form>
             </div>
         </div>
-    </div>
+    </div>    
 
     @push('scripts')
         <script>
@@ -187,6 +202,7 @@
                 });
             });
 
+            //when click on controller button
             function permissionSelectDeselectChild(selector) {
                 let check;
 
@@ -196,19 +212,25 @@
                     check = true;
                 }
 
-                if ($(selector).parent().parent().hasClass('js-controller') === true) {
-                    var action_ul = $(selector).parent().parent().next('div.js-action-wraper');
-                    $.each(action_ul.children('.js-actions'), function(ind, val) {
-                        var cur_check_box = $(val).children().children('input');
-                        $(cur_check_box).prop('checked', check);
-                    });
-                }
+                var action_ul = $(selector).parents('.js-controller').next('div.js-action-wraper');
+                $.each(action_ul.children('.js-actions'), function(ind, val) {
+                    var cur_check_box = $(val).find('input');
+                    $(cur_check_box).prop('checked', check);
+                });
             }
 
+            //when click on actions button
             function permissionSelectParent(selector) {
                 let check = $('.' + selector).is(':checked');
-
                 $('.js-parent-' + selector).prop('checked', check);
+            }
+
+            function togetherSelect(selector,toWhom){
+                if(toWhom && toWhom.length){
+                    let tis=$(selector);
+                    let checked=tis.is(':checked');
+                    let parents=tis.parents('div.js-action-wraper').find('.'+toWhom).prop('checked', checked);
+                }
             }
         </script>
     @endpush

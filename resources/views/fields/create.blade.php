@@ -12,7 +12,7 @@
                     link_to_route(
                         'companies.forms.show',
                         '<i class="fa fa-list"></i> Form View',
-                        [$companyId, $formId],
+                        [auth()->user()->company_id == $companyId ? null : $companyId, $formId],
                         ['class' => 'btn btn-sm btn-light'],
                     ),
                 ) !!}

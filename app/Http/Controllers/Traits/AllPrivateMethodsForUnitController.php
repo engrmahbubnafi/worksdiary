@@ -104,11 +104,14 @@ trait AllPrivateMethodsForUnitController
             return $this->getDataWithoutCompanyTaging();
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'units.index', hasInitial: true, firstTabTitle: 'Unit Database');
+        $lists = Str::generateCompanyTab(routeName:'units.index', hasInitial:true, firstTabTitle:'Unit Database');
 
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('code_name_type')
                     ->title('Unit')
                     ->addClass('text-center')
@@ -179,7 +182,7 @@ trait AllPrivateMethodsForUnitController
             return $this->getDataWithCompanyTaging($request, $companyId);
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'units.index', hasInitial: true, firstTabTitle: 'Unit Database');
+        $lists = Str::generateCompanyTab(routeName:'units.index', hasInitial:true, firstTabTitle:'Unit Database');
         $units = Unit::getUnitListBySearchParam($request);
         $zones = Zone::getZones($request, $companyId)->pluck('name', 'id');
 
@@ -188,6 +191,9 @@ trait AllPrivateMethodsForUnitController
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('code_name_type')
                     ->title('Unit')
                     ->addClass('text-center')

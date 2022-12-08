@@ -15,11 +15,12 @@ class CreateSourcesTable extends Migration
     {
         Schema::create('sources', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 75)->unique();
+            $table->string('name', 75);
             $table->integer('company_id');
             $table->integer('unit_type_id');
             $table->timestamps();
             $table->authors();
+            $table->unique(['company_id', 'name']);
         });
     }
 

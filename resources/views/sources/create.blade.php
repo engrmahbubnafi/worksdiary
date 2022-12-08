@@ -8,9 +8,14 @@
             New Source for "{{ $currentCompany?->title }}"
             @slot('actions')
                 {!! Html::decode(
-                    link_to_route('sources.index', '<i class="fa fa-list"></i> Sources List', $companyId, [
-                        'class' => 'btn btn-sm btn-light',
-                    ]),
+                    link_to_route(
+                        'sources.index',
+                        '<i class="fa fa-list"></i> Sources List',
+                        auth()->user()->company_id == $companyId ? null : $companyId,
+                        [
+                            'class' => 'btn btn-sm btn-light',
+                        ],
+                    ),
                 ) !!}
             @endslot
         </x-subheader-comp>

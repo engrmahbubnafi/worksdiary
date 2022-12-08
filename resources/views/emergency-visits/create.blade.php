@@ -31,18 +31,18 @@
 
                 <div class="row g-9 mb-8">
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('name', 'Task Objective', [
+                        {{ Form::label('objectives', 'Task Objective', [
                             'class' => 'required fs-6 fw-bold mb-2',
                         ]) }}
 
-                        {{ Form::select('name[]', $visitObjectives, null, [
-                            'class' => 'form-control form-control-solid' . ($errors->has('name') ? ' is-invalid' : null),
+                        {{ Form::select('objectives[]', $visitObjectives, null, [
+                            'class' => 'form-control form-control-solid' . ($errors->has('objectives') ? ' is-invalid' : null),
                             //'required' => 'required',
                             'multiple' => 'multiple',
                             'id' => 'visitName',
                         ]) }}
 
-                        @error('name')
+                        @error('objectives')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
@@ -69,11 +69,11 @@
                 </div>
                 <div class="row g-9 mb-8">
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('visit_note', 'Task Note', [
+                        {{ Form::label('task_note', 'Task Note', [
                             'class' => 'fs-6 fw-bold mb-2',
                         ]) }}
 
-                        {{ Form::text('visit_note', null, [
+                        {{ Form::text('task_note', null, [
                             'class' => 'form-control form-control-solid',
                             'placeholder' => 'Write Task note',
                         ]) }}
@@ -135,7 +135,7 @@
                     </div>
                     <div class="col-md-6 fv-row">
                         {{ Form::label('assign_to', 'Assign To', [
-                            'class' => 'required fs-6 fw-bold mb-2',
+                            'class' => 'fs-6 fw-bold mb-2',
                         ]) }}
                         <select placeholder="Select Visitor" data-control="select2"
                             class="form-select form-select-solid{{ $errors->has('assign_to') ? ' is-invalid' : null }}"
@@ -151,6 +151,7 @@
                                 {{ $message }}
                             </div>
                         @enderror
+                        <div class="form-text">For your own task, you don't need to select anyone for assignee.</div>
                     </div>
                 </div>
 

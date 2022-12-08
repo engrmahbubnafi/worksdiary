@@ -2,28 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\UnitType;
-use App\Abilities\UnitName;
-use Illuminate\Http\Request;
+use App\Enum\VisitStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\v1\UnitTypeResource;
+use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
     public function index(Request $request)
     {
-        return $this->mipel($request);
+        dd(VisitStatus::from('waiting_for_approval')->name);
+        // return $this->mipel($request);
         // return $this->nafi();
     }
 
     // Test sending OTP on email.
     private function mipel($request)
     {
-        //$x = Blade::render("{{new App\Abilities\UnitName(['code' => 'ax'])}}");
-        $abc = (new UnitName(['code' => 'ax']))();
 
-        dd($abc);
+        //$x = Blade::render("{{new App\Abilities\UnitName(['code' => 'ax'])}}");
+        // $abc = (new UnitName(['code' => 'ax']))();
+
+        // dd($abc);
 
         // dd($x);
 
@@ -66,19 +65,6 @@ class TestController extends Controller
 
     private function nafi()
     {
-        // $units = Unit::join('unit_types', 'unit_types.id', 'units.unit_type_id')
-        //     ->join('districts', 'districts.id', 'units.district_id')
-        //     ->join('upazilas', 'upazilas.id', 'units.upazila_id')
-        //     ->select(
-        //         'units.*',
-        //         'unit_types.name as unit_type_name',
-        //         'districts.name as district_name',
-        //         'upazilas.name as upazila_name'
-        //     )
-        //     ->where('units.id', 3)
-        //     ->get();
-
-        // dump($units);
     }
 
     private function baten()

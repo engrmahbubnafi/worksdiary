@@ -16,10 +16,11 @@ return new class extends Migration
         Schema::create('zones', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('company_id');
-            $table->string('name', 100)->unique();
+            $table->string('name', 100);
             $table->string('status', 15)->default('active');
             $table->timestamps();
             $table->authors();
+            $table->unique(['company_id', 'name']);
         });
     }
 

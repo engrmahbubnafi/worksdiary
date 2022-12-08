@@ -14,12 +14,21 @@ class CreateEmergencyTasksTable extends Migration
     public function up()
     {
         Schema::create('emergency_tasks', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('title', 155);
+            $table->id();
+            $table->string('name');
             $table->integer('visit_id')->nullable();
-            $table->integer('assign_to');
-            $table->date('commited_date');
-            $table->string('status', 15)->default('active');
+            $table->integer('unit_type_id')->comment('child of unit type');
+            $table->integer('company_unit_id');
+            $table->integer('zone_id')->comment('report purpose');
+            $table->integer('company_id')->comment('report purpose');
+            $table->integer('unit_id')->comment('report purpose');
+            $table->date('date_for');
+            $table->integer('assign_to')->nullable();
+            $table->integer('priority')->default(0);
+            $table->string('status', 25)->default('pending');
+            $table->string('task_note', 200)->nullable();
+            $table->string('comments', 200)->nullable();
+            $table->dateTime('completed_at')->nullable();
             $table->timestamps();
             $table->authors();
         });

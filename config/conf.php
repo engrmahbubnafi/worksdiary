@@ -32,4 +32,6 @@ return [
     ],
 
     'unit'               => 'Shop/Farm/Pond',
+    'max_tab_company_limit' => env('MAX_TAB_COMPANY_LIMIT', 2),
+    'api_pagination_limit' => env('API_PAPINATION_LIMIT', 5)
 ];

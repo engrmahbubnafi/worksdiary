@@ -9,9 +9,10 @@ enum VisitStatus: string
 {
     use EnumToArray;
 
-    case WaitingForApproval = 'waiting';
+    case WaitingForApproval = 'waiting_for_approval';
     case Approved = 'approved';
-    case OnGoing = 'ongoing';
+    case OnGoing = 'on_going';
+    case Paused = 'paused';
     case Postponed = 'postponed';
     case Completed = 'completed';
 }

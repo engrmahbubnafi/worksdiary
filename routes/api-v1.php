@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\ApiAreaController;
 use App\Http\Controllers\Api\V1\ApiCompanyController;
 use App\Http\Controllers\Api\V1\ApiCompanyUnit;
+use App\Http\Controllers\Api\V1\ApiEmergencyVisitController;
 use App\Http\Controllers\Api\V1\ApiSourceController;
 use App\Http\Controllers\Api\V1\ApiUnitController;
 use App\Http\Controllers\Api\V1\ApiUserController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Api\V1\ApiVisitController;
 use App\Http\Controllers\Api\V1\ApiZoneController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\ResetPasswordController;
+use App\Http\Controllers\EmergencyVisitController;
+use App\Models\Role;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,13 +54,21 @@ Route::group([
 
     Route::post('/get-company-units', [ApiCompanyUnit::class, 'getCompanyUnits']);
 
+    Route::post('/get-visit-status', [ApiVisitController::class, 'getVisitStatus']);
+
     Route::post('/get-visitors', [ApiVisitController::class, 'getVisitors']);
 
     Route::post('/get-visits', [ApiVisitController::class, 'getVisits']);
 
     Route::post('/visit-objectives', [ApiVisitController::class, 'visitObjectives']);
 
+    Route::post('/visit-create', [ApiVisitController::class, 'visitCreate']);
+
     Route::post('/visit-details', [ApiVisitController::class, 'visitDetails']);
+
+    Route::post('/emergency-task-create', [ApiEmergencyVisitController::class, 'emergencyTaskCreate']);
+
+    Route::post('/get-emergency-tasks', [ApiEmergencyVisitController::class, 'getEmergencyTasks']);
 });
 
 // Routes those don't need authentication.

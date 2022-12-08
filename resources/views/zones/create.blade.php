@@ -7,7 +7,11 @@
         <x-subheader-comp>
             New Zone For "{{ $currentCompany?->title }}"
             @slot('actions')
-                {!! Html::decode(link_to_route('zones.index', 'Zones List', null, ['class' => 'btn btn-sm btn-light'])) !!}
+                {!! Html::decode(
+                    link_to_route('zones.index', 'Zones List', auth()->user()->company_id == $companyId ? null : $companyId, [
+                        'class' => 'btn btn-sm btn-light',
+                    ]),
+                ) !!}
             @endslot
         </x-subheader-comp>
     </x-slot>
@@ -19,12 +23,12 @@
 
             <div class="card-body p-lg-15">
                 {{ Form::model(request()->old(), [
-                    'route' => ['companies.zones.store',$companyId],
+                    'route' => ['companies.zones.store', $companyId],
                     'class' => 'form',
                     'method' => 'POST',
                 ]) }}
 
-                <div class="row g-9 mb-8">             
+                <div class="row g-9 mb-8">
 
                     <div class="col-md-6 fv-row">
                         {{ Form::label('name', 'Zone Name', [

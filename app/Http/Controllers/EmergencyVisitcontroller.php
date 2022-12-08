@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Throwable;
+use Carbon\Carbon;
+use App\Models\Form;
 use App\Models\Zone;
-use App\Models\Visit;
 use App\Models\Company;
 use App\Models\EmptyObj;
-use App\Enum\VisitStatus;
 use App\Models\CompanyUnit;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use App\Models\EmergencyVisit;
 use App\Models\VisitObjective;
 use Yajra\DataTables\Html\Column;
+use App\Enum\EmergencyVisitStatus;
 use Yajra\DataTables\Html\Builder;
 use Yajra\DataTables\Facades\DataTables;
 use App\Transformers\EmergencyVisitTransformer;
@@ -23,7 +24,6 @@ use App\Http\Requests\EmergencyVisit\UpdateEmergencyVisitRequest;
 
 class EmergencyVisitController extends Controller
 {
-
 
     /**
      * Display a listing of the resource.
@@ -49,29 +49,60 @@ class EmergencyVisitController extends Controller
 
         // Get visits if it is an ajax request.
         if ($request->ajax()) {
-            return DataTables::of(EmergencyVisit::getVisits($request->merge(['company_id' => $companyId])))
+
+            if ($request->exists('supervisor')) {
+                $supervisor = (int) $request->get('supervisor');
+                if ($supervisor) {
+                    $request->merge(['supervisor_id' => $request->user()->id]);
+                } else {
+                    $request->merge(['supervisor_id' => $request->user()->supervisor_id]);
+                }
+            }
+
+            return DataTables::eloquent(
+                EmergencyVisit::getVisitsEloquentObj($request->merge(['company_id' => $companyId]))
+                    ->orderBy('emergency_tasks.date_for')
+                    ->orderBy('emergency_tasks.created_at')
+            )
                 ->setTransformer(new EmergencyVisitTransformer(EmergencyVisit::nonEditableArray()))
+                ->filterColumn('date_for', function ($query, $value) {
+
+                    $segments = Str::of($value)->split('/\|/');
+
+                    if (!empty($segments[0]) && !empty($segments[1])) {
+
+                        $min = Carbon::parse($segments[0]);
+                        $max = Carbon::parse($segments[1]);
+
+                        $query->whereBetween('emergency_tasks.date_for', [$min, $max]);
+                    }
+                })
+                ->filterColumn('status', function ($query, $value) {
+                    $query->where('emergency_tasks.status', $value);
+                })
                 ->toJson();
         }
 
         // Generate tab for each company.
         $lists = Str::generateCompanyTab(routeName: 'emergency.visits.index');
 
+        $supervisors = [
+            '' => 'Select Supervisor',
+            '1' => 'Me as a Supervisor',
+            '0' => 'My Supervisor'
+        ];
+
         // Build columns.
         $html = $builder
             ->columns([
                 Column::make('name')
-                    ->title('Name')
+                    ->title('Visit Objective')
                     ->addClass('text-center')
                     ->searchable(true),
 
                 Column::make('unit')
+                    ->name('units.name')
                     ->title('Unit')
-                    ->addClass('text-center')
-                    ->searchable(true),
-
-                Column::make('zone')
-                    ->title('Zone')
                     ->addClass('text-center')
                     ->searchable(true),
 
@@ -86,6 +117,23 @@ class EmergencyVisitController extends Controller
                     ->addClass('text-center')
                     ->searchable(true),
 
+                Column::make('status')
+                    ->title('Status')
+                    ->addClass('text-center')
+                    ->searchable(true)
+                    ->hidden(),
+
+                Column::make('created_at')
+                    ->title('Created')
+                    ->addClass('text-center')
+                    ->searchable(false),
+
+                Column::make('created_by')
+                    ->name('created.name')
+                    ->title('Created By')
+                    ->addClass('text-center')
+                    ->searchable(false),
+
                 Column::make('action')
                     ->title('Action')
                     ->addClass('text-center')
@@ -94,13 +142,23 @@ class EmergencyVisitController extends Controller
             ])
             ->parameters([
                 'pageLength' => 25,
+                'order' => [], /* No ordering applied by DataTables during initialisation */
                 'drawCallback' => 'function() {
                     tooltipViewerFn();
                     handleSearchDatatable();
                 }',
+                "aoSearchCols" => [
+                    '', //0[name]
+                    '', //1[unit]
+                    '', //2[assign_to]
+                    '', //3[date_for]
+                    [
+                        "sSearch" => EmergencyVisitStatus::Pending->value //4[status]
+                    ],
+                ],
             ]);
 
-        return view('emergency-visits.index', compact('html', 'lists', 'companyId'));
+        return view('emergency-visits.index', compact('html', 'lists', 'companyId', 'supervisors'));
     }
 
     /**
@@ -109,7 +167,7 @@ class EmergencyVisitController extends Controller
      * @param int $companyId
      * @return \Illuminate\Http\Response
      */
-    public function create(Request $request, int|null $companyId = null)
+    public function create(Request $request, int | null $companyId = null)
     {
 
         // Set user's company ID if $companyId is null.
@@ -148,19 +206,17 @@ class EmergencyVisitController extends Controller
     {
         try {
             // Store validated data into variable.
-            $data = $request->validated();
+            $validated = $request->validated();
 
+            $companyUnit = CompanyUnit::where('id', $validated['company_unit_id'])
+                ->select('unit_id', 'company_id', 'zone_id')
+                ->first();
 
-            // Set this company ID.
-            $data['company_id'] = $company->id;
+            $data = array_merge($validated, $companyUnit->toArray());
 
-            if (is_array($data['name'])) {
-                $data['name'] = Arr::join($data['name'], ',');
-            }
-            $data['status'] = VisitStatus::WaitingForApproval->value;
+            $data['name'] = Arr::join($data['objectives'], ',');
+            $data['status'] = EmergencyVisitStatus::Pending->value;
 
-            $unit_id = CompanyUnit::where('id', $data['company_unit_id'])->value('unit_id');
-            $data['unit_id'] = $unit_id;
             // Save validated data.
             EmergencyVisit::create($data);
 
@@ -204,7 +260,7 @@ class EmergencyVisitController extends Controller
 
         $currentCompany = (new EmptyObj())->setRawAttributes([
             'id' => $companyId,
-            'title' => $currentCompanyName
+            'title' => $currentCompanyName,
         ]);
 
         $visitObjectives = VisitObjective::getTitles($request->merge(['company_id' => $companyId]))
@@ -213,7 +269,7 @@ class EmergencyVisitController extends Controller
         $zoneObj = Zone::getZones($request, $companyId);
         $zones = $zoneObj->pluck('name', 'id');
 
-        $visitStatus = Arr::except(VisitStatus::array(), Visit::nonEditableArray());
+        $visitStatus = Arr::except(EmergencyVisitStatus::array(), EmergencyVisit::nonEditableArray());
 
         return view('emergency-visits.edit', compact(
             'emergencyvisit',
@@ -233,18 +289,25 @@ class EmergencyVisitController extends Controller
      * @param \App\Models\EmergencyVisit $visit
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateEmergencyVisitRequest $request, Company $company, EmergencyVisit $visit)
+    public function update(UpdateEmergencyVisitRequest $request, Company $company, EmergencyVisit $emergencyvisit)
     {
         try {
             // Store validated data into variable.
-            $data = $request->validated();
-            //dd($data);
-            if (is_array($data['name'])) {
-                $data['name'] = Arr::join($data['name'], ',');
-            }
+            $validated = $request->validated();
 
+            $companyUnit = CompanyUnit::where('id', $validated['company_unit_id'])
+                ->select('unit_id', 'company_id', 'zone_id')
+                ->first();
+
+            $data = array_merge($validated, $companyUnit->toArray());
+            //dd($data);
+            $data['name'] = Arr::join($data['objectives'], ',');
+
+            if (empty($data['assign_to'])) {
+                $data['assign_to'] = $request->user()->id;
+            }
             // Update validated data into database.
-            $visit->update($data);
+            $emergencyvisit->update(Arr::except($data, ['objectives']));
 
             return redirect()->route('emergency.visits.index', auth()->user()->company_id == $company->id ? null : $company->id)
                 ->with('flash_success', "Visit updated successfully!");
@@ -254,6 +317,30 @@ class EmergencyVisitController extends Controller
                 'error' => [$th->getMessage()],
             ]);
         }
+    }
+
+
+    /**
+     * Display the specified resource.
+     *
+     * @param Visit $zone
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request, $companyId, $id)
+    {
+        // Check if user is validated for access.
+        $result = $this->checkValidity($companyId);
+
+        // Return unauthorized access message.
+        if ($result) {
+            return $result;
+        }
+
+        $emergencyVisit = EmergencyVisit::getVisit($request->merge(['id' => $id]));
+        $emergencyVisit->load('emergencyTaskImages');
+        //dd($emergencyVisit->toArray());
+
+        return view('emergency-visits.show', compact('companyId', 'emergencyVisit'));
     }
 
     /**

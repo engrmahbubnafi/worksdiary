@@ -29,15 +29,16 @@ class StoreUserRequest extends FormRequest
             'email' => 'required|string|max:100|unique:users',
             'password' => ['required', Password::default()],
             'role_id' => 'required',
-            'code' => 'required|max:13|unique:users,code',
+            'code' => 'required|unique:users,code',
             'avatar' => 'required|image',
             'department_id' => 'required',
             'supervisor_id' => 'sometimes',
             'designation_id' => 'required',
             'status' => 'required',
-            'mobile' => 'required|unique:users',
+            'mobile' => 'required|numeric|digits:11|unique:users',
             'company_ids' => 'sometimes',
             'zone_ids' => 'sometimes',
+            'email_verified_at'=>'sometimes'
         ];
     }
 }

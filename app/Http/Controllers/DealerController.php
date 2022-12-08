@@ -25,6 +25,9 @@ class DealerController extends Controller
 
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center'),
@@ -46,7 +49,7 @@ class DealerController extends Controller
                     ->addClass('text-center'),
             ])
             ->parameters([
-                'pageLength'   => 25,
+                'pageLength' => 25,
                 'drawCallback' => 'function() {
                     tooltipViewerFn();
                 }',
@@ -76,14 +79,14 @@ class DealerController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong storing data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
 
     public function edit($id)
     {
-        $dealer   = Dealer::findOrFail($id);
+        $dealer = Dealer::findOrFail($id);
         $district = DB::table('districts')->pluck('name', 'id')->prepend('Select One', '');
         $upazilas = DB::table('upazilas')->where('district_id', $dealer->district_id)->pluck('name', 'id')->prepend('Select One', '');
         return view('dealers.edit', compact('dealer', 'district', 'upazilas'));
@@ -101,7 +104,7 @@ class DealerController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong updating data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
@@ -118,7 +121,7 @@ class DealerController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong deleting data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }

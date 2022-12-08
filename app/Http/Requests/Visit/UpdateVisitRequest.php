@@ -21,24 +21,22 @@ class UpdateVisitRequest extends FormRequest
      *
      * @return array<string, mixed>
      */
+
     public function rules()
     {
-        return [
-            'name' => 'required',
+        $data = [
+            'objectives' => 'required|array',
             'date_for' => 'required|date',
-            'company_unit_id' => 'required|integer',
+            'unit_type_id' => 'required|integer|exists:unit_types,id',
+            'company_unit_id' => 'required|integer|exists:company_units,id',
             'status' => 'required',
-            'assign_to' => 'required|integer',
-            'unit_type_id' => 'required|integer',
-            'zone_id' => 'sometimes|integer',
             'visit_note' => 'sometimes'
         ];
-    }
 
-    public function messages()
-    {
-        return [
-            'name.required' => 'The visit objective field is required'
-        ];
+        if (!empty($this->assign_to)) {
+            $data['assign_to'] =  'integer';
+        }
+
+        return $data;
     }
 }

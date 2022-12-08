@@ -59,6 +59,9 @@ class VisitObjectiveController extends Controller
         // Build columns.
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('title')
                     ->title('Objective')
                     ->addClass('text-center'),

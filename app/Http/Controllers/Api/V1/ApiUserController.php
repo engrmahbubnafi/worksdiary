@@ -7,6 +7,8 @@ use App\Http\Resources\v1\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Throwable;
@@ -50,7 +52,7 @@ class ApiUserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/user/edit/mobile",
+     *     path="/api/v1/users/edit/mobile",
      *     summary="Updates user mobile",
      *     security={{"sanctum": {}}},
      *     tags={"User"},
@@ -58,6 +60,7 @@ class ApiUserController extends Controller
      *         @OA\MediaType(
      *             mediaType="application/json",
      *             @OA\Schema(
+     *                  required={"mobile"},
      *                  @OA\Property(
      *                     property="mobile",
      *                     type="string",
@@ -83,27 +86,20 @@ class ApiUserController extends Controller
      */
     public function mobileEdit(Request $request)
     {
-
         $validated = $request->validate([
-            'mobile' => 'sometimes',
+            'mobile' => 'required|numeric|digits:11',
         ]);
 
         // Get requested user
         $user = $request->user();
 
-        DB::beginTransaction();
 
         try {
             // Update mobile
-            $user->update([
-                'mobile' => $validated['mobile'],
-            ]);
-
-            DB::commit();
+            $user->update(['mobile' => $validated['mobile']]);
 
             return new UserResource($user);
         } catch (Throwable $th) {
-            DB::rollBack();
 
             return response()->json([
                 'message' => 'Something went wrong updating data!',
@@ -114,7 +110,7 @@ class ApiUserController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/user/edit/avatar",
+     *     path="/api/v1/users/edit/avatar",
      *     summary="Updates user avatar",
      *     security={{"sanctum": {}}},
      *     tags={"User"},
@@ -122,6 +118,7 @@ class ApiUserController extends Controller
      *          @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
+     *                  required={"avatar"},
      *                  @OA\Property(
      *                     description="Avatar file to upload",
      *                     property="file",
@@ -149,43 +146,41 @@ class ApiUserController extends Controller
     public function avatarEdit(Request $request)
     {
         $request->validate([
-            'avatar' => 'sometimes|required|image',
+            'avatar' => 'required|image',
         ]);
 
         // Get requested user
         $user = $request->user();
 
-        DB::beginTransaction();
-
         try {
             // Process the avatar if avatar is uploaded
-            if ($request->has('avatar')) {
-                $uploadedAvatar = $request->file('avatar');
+            $uploadedAvatar = $request->file('avatar');
+            $imageName = Str::uuid() . '.' . $uploadedAvatar->getClientOriginalExtension();
+            $imageDirectory = 'avatar' . DIRECTORY_SEPARATOR . $user->id;
+            $imagePath = $imageDirectory . DIRECTORY_SEPARATOR . $imageName;
+            $storagePathIntervImg = storage_path('app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR);
+            $fullPath = $storagePathIntervImg . $imagePath;
 
-                $imageName = Str::uuid() . '.' . $uploadedAvatar->getClientOriginalExtension();
-
-                $imageDirectory = 'avatar' . DIRECTORY_SEPARATOR . $user->id;
-                $imagePath = $imageDirectory . DIRECTORY_SEPARATOR . $imageName;
-
-                $storagePathIntervImg = storage_path('app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR);
-
-                Image::make($uploadedAvatar)
-                    ->resize(300, 300, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    })
-                    ->resizeCanvas(300, 300, 'center', false, null)
-                    ->save($storagePathIntervImg . $imagePath);
-
-                // Update database with processed avatar
-                $user->update(['avatar' => $imagePath]);
+            // Delete existing avatar.
+            if (file_exists($storagePathIntervImg . $user->avatar)) {
+                File::delete($storagePathIntervImg . $user->avatar);
             }
 
-            DB::commit();
+            Storage::makeDirectory($imageDirectory);
+
+            Image::make($uploadedAvatar)
+                ->resize(300, 300, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })
+                ->resizeCanvas(300, 300, 'center', false, null)
+                ->save($fullPath);
+
+            // Update database with processed avatar
+            $user->update(['avatar' => $imagePath]);
 
             return new UserResource($user);
         } catch (Throwable $th) {
-            DB::rollBack();
 
             return response()->json([
                 'message' => 'Something went wrong updating data!',

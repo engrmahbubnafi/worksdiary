@@ -20,7 +20,6 @@ class ApiUnitController extends Controller
      *         @OA\MediaType(
      *             mediaType="application/json",
      *             @OA\Schema(
-     *                  required={"unit_type_id"},
      *                  @OA\Property(
      *                     property="unit_type_id",
      *                     type="integer"

@@ -31,8 +31,10 @@ class UserTransformer extends TransformerAbstract
         // Create edit link
         $editLink = Link::edit(route('companies.users.edit', [$user->company_id, $user->id]), 'Edit', ['menu-link', 'px-3']);
 
+        $detailsLink = Link::show(route('companies.users.show', [$user->company_id, $user->id]), 'View Profile', ['menu-link', 'px-3']);
         // Create delete link
         $deleteLink = Link::delete(route('companies.users.destroy', [$user->company_id, $user->id]), 'Are you sure to delete this user?', ['menu-link', 'px-3']);
+
 
         if (!$user->role_deletable) {
             $deleteLink = '';
@@ -45,8 +47,7 @@ class UserTransformer extends TransformerAbstract
             'company_department' => $companyDepartment,
             'zones' => $user->zone_names,
             'status' => Str::ucfirst($user->status),
-            'action' => Link::generateDropdown($transferUserLink, $editLink, $deleteLink),
+            'action' => Link::generateDropdown($transferUserLink, $editLink, $detailsLink, $deleteLink),
         ];
     }
-
 }

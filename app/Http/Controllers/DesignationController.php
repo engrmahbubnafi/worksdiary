@@ -25,6 +25,9 @@ class DesignationController extends Controller
 
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center'),
@@ -40,7 +43,7 @@ class DesignationController extends Controller
                     ->searchable(false),
             ])
             ->parameters([
-                'pageLength'   => 25,
+                'pageLength' => 25,
                 'drawCallback' => 'function() {
                     tooltipViewerFn();
                     handleSearchDatatable();
@@ -66,7 +69,7 @@ class DesignationController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong storing data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
@@ -90,7 +93,7 @@ class DesignationController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong updating data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
@@ -107,7 +110,7 @@ class DesignationController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong deleting data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }

@@ -16,11 +16,13 @@ class CreateDepartmentsTable extends Migration
         Schema::create('departments', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('company_id');
-            $table->string('name', 75)->unique();
-            $table->string('code', 17)->unique()->nullable();
+            $table->string('name', 75);
+            $table->string('code', 17)->nullable();
             $table->string('status', 15)->default('active');
             $table->timestamps();
             $table->authors();
+            $table->unique(['company_id', 'name']);
+            $table->unique(['company_id', 'code']);
         });
     }
 

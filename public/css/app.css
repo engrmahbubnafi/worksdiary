@@ -1059,6 +1059,9 @@ select {
 .justify-items-center {
   justify-items: center;
 }
+.gap-5 {
+  gap: 1.25rem;
+}
 .gap-2 {
   gap: 0.5rem;
 }
@@ -1067,9 +1070,6 @@ select {
 }
 .gap-3 {
   gap: 0.75rem;
-}
-.gap-5 {
-  gap: 1.25rem;
 }
 .gap-1 {
   gap: 0.25rem;
@@ -1288,17 +1288,9 @@ select {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
-.py-1 {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
 .px-0 {
   padding-left: 0px;
   padding-right: 0px;
-}
-.px-1 {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
 }
 .px-7 {
   padding-left: 1.75rem;
@@ -1307,6 +1299,14 @@ select {
 .py-5 {
   padding-top: 1.25rem;
   padding-bottom: 1.25rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.px-1 {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
 }
 .py-6 {
   padding-top: 1.5rem;

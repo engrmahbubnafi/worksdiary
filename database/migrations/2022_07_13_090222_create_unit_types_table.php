@@ -16,11 +16,12 @@ class CreateUnitTypesTable extends Migration
         Schema::create('unit_types', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('parent_id')->nullable();
-            $table->string('name', 55)->unique()->comment('ex: shop,farm');
+            $table->string('name', 55)->comment('ex: shop,farm');
             $table->boolean('is_slot_enabled')->default(0);
             $table->string('status', 15)->default('active');
             $table->timestamps();
             $table->authors();
+            $table->unique(['parent_id', 'name']);
         });
     }
 

@@ -7,12 +7,20 @@
         <x-subheader-comp>
             Edit User For Company::{{ $currentCompany }}
             @slot('actions')
-                {!! Html::decode(link_to_route('users.index', 'Users List', null, ['class' => 'btn btn-sm btn-light'])) !!}
+                {!! Html::decode(
+                    link_to_route(
+                        'companies.users.show',
+                        'View Profile',
+                        [$user->company_id, $user->id],
+                        ['class' => 'btn btn-sm btn-light'],
+                    ),
+                ) !!}
+                {!! Html::decode(link_to_route('users.index', 'Users List', null, ['class' => 'btn btn-sm btn-secondary'])) !!}
             @endslot
         </x-subheader-comp>
     </x-slot>
 
-    <div id="kt_content_container" class="container-xxl">
+    <div id="kt_content_container" class="container-xxl" x-data="user">
         <div class="card">
             <div class="card-body p-lg-15">
 
@@ -29,7 +37,7 @@
                     <div class="col-md-6 fv-row">
                         {{ Form::label('name', 'Name', ['class' => 'd-flex align-items-center fs-6 fw-bold mb-2 required']) }}
 
-                        {{ Form::text('name', $user->name, [
+                        {{ Form::text('name', null, [
                             'class' => 'form-control form-control-solid' . ($errors->has('name') ? ' is-invalid' : null),
                             'placeholder' => 'Enter Name',
                             'required' => 'required',
@@ -45,7 +53,7 @@
                     <div class="col-md-6 fv-row">
                         {{ Form::label('mobile', 'Mobile', ['class' => 'required fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::text('mobile', $user->mobile, [
+                        {{ Form::text('mobile', null, [
                             'class' => 'form-control form-control-solid' . ($errors->has('mobile') ? ' is-invalid' : null),
                             'placeholder' => 'Enter User Mobile',
                             'required' => 'required',
@@ -61,9 +69,12 @@
 
                 <div class="row g-9 mb-8">
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('email', 'Email', ['class' => 'required fs-6 fw-bold mb-2']) }}
+                        <label for="email"
+                            class="d-flex align-items-center fs-6 fw-bold mb-2 justify-content-between">
+                            <span>Email</span>
+                        </label>
 
-                        {{ Form::text('email', $user->email, [
+                        {{ Form::text('email', null, [
                             'class' => 'form-control form-control-solid' . ($errors->has('email') ? ' is-invalid' : null),
                             'placeholder' => 'Enter User Email',
                             'required' => 'required',
@@ -77,29 +88,9 @@
                     </div>
 
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('password', 'Password', ['class' => 'd-flex align-items-center fs-6 fw-bold mb-2 required']) }}
-
-                        {{ Form::password('password', [
-                            'class' => 'form-control form-control-solid' . ($errors->has('password') ? ' is-invalid' : null),
-                            'placeholder' => 'Enter User Password',
-                            'required' => 'required',
-                        ]) }}
-
-                        @error('password')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                </div>
-
-                <div class="row g-9 mb-8">
-
-                    <div class="col-md-6 fv-row">
                         {{ Form::label('code', 'Code (Valid User ID)', ['class' => 'required fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::text('code', $user->code, [
+                        {{ Form::text('code', null, [
                             'class' => 'form-control form-control-solid' . ($errors->has('code') ? ' is-invalid' : null),
                             'placeholder' => 'Enter Valid User ID',
                             'required' => 'required',
@@ -111,64 +102,101 @@
                             </div>
                         @enderror
                     </div>
-
-                    <div class="col-md-6 fv-row">
-                        {{ Form::label('role_id', 'Role', ['class' => 'required fs-6 fw-bold mb-2']) }}
-
-                        {{ Form::select('role_id', $roles, $user->role_id, [
-                            'class' => 'form-select form-select-solid' . ($errors->has('role_id') ? ' is-invalid' : null),
-                            'placeholder' => 'Select Role',
-                            'data-control' => 'select2',
-                            'required' => 'required',
-                        ]) }}
-
-                        @error('role_id')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
                 </div>
 
                 <div class="row g-9 mb-8">
-
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('avatar', 'Upload Avatar', ['class' => 'required fs-6 fw-bold mb-2']) }}
+                        <div class="row">
+                            <div class="col-md-9">
+                                {{ Form::label('avatar', 'Upload Avatar', ['class' => 'fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::file('avatar', ['class' => 'form-control form-control-solid' . ($errors->has('avatar') ? ' is-invalid' : null)]) }}
+                                {{ Form::file('avatar', ['class' => 'form-control form-control-solid' . ($errors->has('avatar') ? ' is-invalid' : null)]) }}
 
-                        @error('avatar')
-                            <div class="invalid-feedback">
-                                {{ $message }}
+                                @error('avatar')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
-                        @enderror
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-end h-100">
+                                    @if ($user->avatar)
+                                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="avatar"
+                                            width="80" height="80">
+                                    @else
+                                        <span class="pb-3">
+                                            No Avatar
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('supervisor_id', 'Supervisor', ['class' => 'fs-6 fw-bold mb-2']) }}
+                        {{ Form::label('password', 'Password', ['class' => 'd-flex align-items-center fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::select('supervisor_id', $supervisors, $user->supervisor_id, [
-                            'class' => 'form-select form-select-solid' . ($errors->has('supervisor_id') ? ' is-invalid' : null),
-                            'data-control' => 'select2',
-                            'data-hide-search' => 'true',
-                            'placeholder' => 'Select a Supervisor',
+                        {{ Form::password('password', [
+                            'class' => 'form-control form-control-solid' . ($errors->has('password') ? ' is-invalid' : null),
+                            'placeholder' => 'Enter User Password',
                         ]) }}
 
-                        @error('supervisor_id')
+                        @error('password')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
                         @enderror
                     </div>
-
                 </div>
+
+                @if (auth()->user()->isAdministrator() || $user->id != auth()->id())
+                    <div class="row g-9 mb-8">
+                        <div class="col-md-6 fv-row">
+                            {{ Form::label('role_id', 'Role', ['class' => 'required fs-6 fw-bold mb-2']) }}
+
+                            {{ Form::select('role_id', $roles, null, [
+                                'class' => 'form-select form-select-solid' . ($errors->has('role_id') ? ' is-invalid' : null),
+                                'placeholder' => 'Select Role',
+                                'data-control' => 'select2',
+                                'required' => 'required',
+                            ]) }}
+
+                            @error('role_id')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 fv-row">
+                            {{ Form::label('supervisor_id', 'Supervisor', ['class' => 'fs-6 fw-bold mb-2']) }}
+
+                            {{ Form::select('supervisor_id', $supervisors, null, [
+                                'class' => 'form-select form-select-solid' . ($errors->has('supervisor_id') ? ' is-invalid' : null),
+                                'data-control' => 'select2',
+                                'data-hide-search' => 'true',
+                                'placeholder' => 'Select a Supervisor',
+                            ]) }}
+
+                            @error('supervisor_id')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                    </div>
+                @else
+                    <input type="hidden" name="role_id" value="{{ $user->role_id }}">
+                    <input type="hidden" name="supervisor_id" value="{{ $user->supervisor_id }}">
+                @endif
 
                 <div class="row g-9 mb-8">
 
                     <div class="col-md-6 fv-row">
                         {{ Form::label('department_id', 'Department', ['class' => 'required fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::select('department_id', $departments, $user->department_id, [
+                        {{ Form::select('department_id', $departments, null, [
                             'class' => 'form-select form-select-solid' . ($errors->has('department_id') ? ' is-invalid' : null),
                             'data-control' => 'select2',
                             'data-hide-search' => 'true',
@@ -198,7 +226,7 @@
                     <div class="col-md-6 fv-row">
                         {{ Form::label('designation_id', 'Designation', ['class' => 'required fs-6 fw-bold mb-2']) }}
 
-                        {{ Form::select('designation_id', $designations, $user->designation_id, [
+                        {{ Form::select('designation_id', $designations, null, [
                             'class' => 'form-select form-select-solid' . ($errors->has('designation_id') ? ' is-invalid' : null),
                             'data-control' => 'select2',
                             'data-hide-search' => 'true',
@@ -216,7 +244,7 @@
 
                 <div class="row g-9 mb-8">
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('zone', 'Zone', ['class' => 'fs-6 fw-bold mb-2']) }}                     
+                        {{ Form::label('zone', 'Zone', ['class' => 'fs-6 fw-bold mb-2']) }}
 
                         {{ Form::select('zone_ids[]', $zones, $selectedUserZonesIds, [
                             'id' => 'zone',
@@ -249,6 +277,20 @@
                         @enderror
                     </div>
                 </div>
+
+                @if (auth()->user()->isAdministrator() && !$user->email_verified_at)
+                    <div class="fv-row mb-5">
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex align-items-center">
+                                <label class="form-check form-check-custom form-check-solid me-10">
+                                    <input name="email_verified_at" class="form-check-input h-20px w-20px"
+                                        type="checkbox" value="{{ now() }}" />
+                                    <span class="form-check-label fw-bold">With Verify Email Address</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 @if ($otherCompanies->count())
                     <div class="mb-7 text-center">
@@ -285,6 +327,8 @@
                         </div>
                     </div>
                 @endif
+
+
 
                 <button type="submit" class="btn btn-primary">
                     <span class="indicator-label">Submit</span>

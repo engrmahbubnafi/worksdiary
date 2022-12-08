@@ -17,16 +17,19 @@ class VisitResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'status' => $this->status,
+            'status' => str()->of($this->status)->replace("_", " ")->title(),
             'unit_type' => $this->unit_type,
             'unit_id' => $this->unit_id,
             'unit_name' => $this->unit_name,
             'company_name' => $this->company_name,
-            'created_by' => $this->created_by,
-            'assaign_to' => $this->assaign_to,
-            'priority' => $this->priority ? 'High' : 'Low',
-            'created' => $this->created_at->format('Y-m-d'),
-            'updated' => $this->updated_at->format('Y-m-d'),
+            'created_by' => $this->created_name,
+            'assaign_to' => $this->assaigned_name,
+            'created' => $this->created_at->format('jS M,Y'),
+            'updated' => $this->updated_at->format('jS M,Y'),
+            'started_at' => $this->started_at?->format('jS M,Y h:i a'),
+            'started_time' => $this->started_at?->format('h:i a'),
+            'completed_at' => $this->completed_at?->format('jS M,Y h:i a'),
+            'completed_time' => $this->completed_at?->format('h:i a'),
         ];
     }
 }

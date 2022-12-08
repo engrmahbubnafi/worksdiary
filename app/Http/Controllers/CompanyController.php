@@ -24,6 +24,9 @@ class CompanyController extends Controller
 
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center'),

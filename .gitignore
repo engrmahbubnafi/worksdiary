@@ -14,3 +14,4 @@ yarn-error.log
 /.vscode
 composer.lock
 /.vs
+/storage/api-docs/api-docs.json

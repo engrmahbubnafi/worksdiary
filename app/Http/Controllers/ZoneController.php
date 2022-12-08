@@ -59,11 +59,14 @@ class ZoneController extends Controller
             return $this->getZoneData($companyId);
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'zones.index');
+        $lists = Str::generateCompanyTab(routeName:'zones.index');
 
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center')
@@ -107,7 +110,7 @@ class ZoneController extends Controller
             return $result;
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'zones.create');
+        $lists = Str::generateCompanyTab(routeName:'zones.create');
 
         $currentCompany = $lists->where('id', $companyId)->first();
 

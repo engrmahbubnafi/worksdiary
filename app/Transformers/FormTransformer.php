@@ -16,7 +16,7 @@ class FormTransformer extends TransformerAbstract
     public function transform(Form $form): array
     {
         // Add new field link
-        $newField = Link::customLink(route('forms.fields.create', [$form->id]), 'la la-plus', 'New Field', ['menu-link', 'px-3']);
+        $newField = Link::customLink(route('forms.fields.create', [$form->id]), 'la la-plus', 'Add Field', ['menu-link', 'px-3']);
 
         // Create fields listing link
         $fields = Link::customLink(

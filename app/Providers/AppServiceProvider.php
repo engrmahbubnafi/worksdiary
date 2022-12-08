@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use App\Mixins\MigrationMixin;
 use App\Mixins\StrMixins;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use App\Mixins\MigrationMixin;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Schema\Blueprint;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         Str::mixin(new StrMixins());
         Blueprint::mixin(new MigrationMixin());
 
-        URL::defaults(['dashboardUrl' => 'home']);
+        URL::defaults(['dashboardUrl' => 'dashboard']);
     }
 
     /**

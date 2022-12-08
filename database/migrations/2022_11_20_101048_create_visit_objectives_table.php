@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('status')->default('active');
             $table->timestamps();
+            $table->unique(['company_id', 'title']);
         });
     }
 

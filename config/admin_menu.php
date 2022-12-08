@@ -258,6 +258,34 @@ return collect([
                 ]),
             ]),
 
+            // Unit Type Menu
+            (new EmptyObj)->setRawAttributes([
+                'title' => 'Unit Type',
+                'route_name' => ['unit-types.edit'],
+                'params' => [],
+                'permission' => null,
+                'icon' => null,
+                'children' => collect([
+                    (new EmptyObj)->setRawAttributes([
+                        'title' => 'List',
+                        'route_name' => 'unit-types.index',
+                        'params' => [],
+                        'permission' => 'UnitTypeController@index',
+                        'icon' => null,
+                        'children' => collect([]),
+                    ]),
+
+                    (new EmptyObj)->setRawAttributes([
+                        'title' => 'Create',
+                        'route_name' => 'unit-types.create',
+                        'params' => [],
+                        'permission' => 'UnitTypeController@create',
+                        'icon' => null,
+                        'children' => collect([]),
+                    ]),
+                ]),
+            ]),
+
             // Zone Menu
             (new EmptyObj)->setRawAttributes([
                 'title' => 'Zones',
@@ -364,34 +392,6 @@ return collect([
                         'route_name' => 'forms.create',
                         'params' => [],
                         'permission' => 'FormController@create',
-                        'icon' => null,
-                        'children' => collect([]),
-                    ]),
-                ]),
-            ]),
-
-            // Unit Type Menu
-            (new EmptyObj)->setRawAttributes([
-                'title' => 'Unit Type',
-                'route_name' => ['unit-types.edit'],
-                'params' => [],
-                'permission' => null,
-                'icon' => null,
-                'children' => collect([
-                    (new EmptyObj)->setRawAttributes([
-                        'title' => 'List',
-                        'route_name' => 'unit-types.index',
-                        'params' => [],
-                        'permission' => 'UnitTypeController@index',
-                        'icon' => null,
-                        'children' => collect([]),
-                    ]),
-
-                    (new EmptyObj)->setRawAttributes([
-                        'title' => 'Create',
-                        'route_name' => 'unit-types.create',
-                        'params' => [],
-                        'permission' => 'UnitTypeController@create',
                         'icon' => null,
                         'children' => collect([]),
                     ]),

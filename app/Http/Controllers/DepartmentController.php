@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Throwable;
 use App\Enum\Status;
-use App\Models\Company;
-use App\Models\UnitType;
-use App\Models\Department;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Yajra\DataTables\Html\Column;
-use App\Models\DepartmentUnitType;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\Html\Builder;
-use Yajra\DataTables\Facades\DataTables;
-use App\Transformers\DepartmentTransformer;
-use Illuminate\Database\Eloquent\Collection;
 use App\Http\Requests\Department\StoreDepartmentRequest;
 use App\Http\Requests\Department\UpdateDepartmentRequest;
+use App\Models\Company;
+use App\Models\Department;
+use App\Models\DepartmentUnitType;
+use App\Models\UnitType;
+use App\Transformers\DepartmentTransformer;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Throwable;
+use Yajra\DataTables\Facades\DataTables;
+use Yajra\DataTables\Html\Builder;
+use Yajra\DataTables\Html\Column;
 
 class DepartmentController extends Controller
 {
@@ -36,7 +36,6 @@ class DepartmentController extends Controller
         )
             ->join('unit_types', 'unit_types.id', 'department_unit_types.unit_type_id')
             ->groupBy('department_id');
-
 
         $departments = Department::join('companies', 'companies.id', '=', 'departments.company_id')
             ->leftJoinSub($sub, 'department_unit_types', function ($join) {
@@ -72,13 +71,12 @@ class DepartmentController extends Controller
             return $this->getDepartmentData($companyId);
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'departments.index');
+        $lists = Str::generateCompanyTab(routeName:'departments.index');
 
         $html = $builder
             ->columns([
                 Column::make('id')
-                    ->title('Id')
-                    ->addClass('text-center'),
+                    ->visible(false),
 
                 Column::make('name')
                     ->title('Name')
@@ -125,7 +123,7 @@ class DepartmentController extends Controller
             return $result;
         }
 
-        $lists = Str::generateCompanyTab(routeName: 'departments.create');
+        $lists = Str::generateCompanyTab(routeName:'departments.create');
 
         $currentCompany = $lists->where('id', $companyId)->first();
 

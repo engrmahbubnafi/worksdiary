@@ -66,11 +66,14 @@ class SourceController extends Controller
         }
 
         // Generate tab for each company.
-        $lists = Str::generateCompanyTab(routeName: 'sources.index');
+        $lists = Str::generateCompanyTab(routeName:'sources.index');
 
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center')
@@ -120,7 +123,7 @@ class SourceController extends Controller
         }
 
         // Generate tab for each company.
-        $lists = Str::generateCompanyTab(routeName: 'sources.create');
+        $lists = Str::generateCompanyTab(routeName:'sources.create');
 
         $currentCompany = $lists->where('id', $companyId)->first();
 

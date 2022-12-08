@@ -13,8 +13,11 @@ class TabComp extends Component
      *
      * @return void
      */
-    public function __construct(public Collection $lists = new Collection(), public bool $isTabable = false, public int | null $commonParam = null)
-    {}
+    public $maxLimitForTab = 2;
+
+    public function __construct(public Collection $lists = new Collection(), public bool $isTabable = false, public $commonParam = null, public bool $isComonParamAddedToRoute = true)
+    {
+    }
 
     public function currentRouteName()
     {
@@ -44,6 +47,8 @@ class TabComp extends Component
      */
     public function render()
     {
+        $this->maxLimitForTab = config('conf.max_tab_company_limit');
+
         return view('components.tab-comp');
     }
 }

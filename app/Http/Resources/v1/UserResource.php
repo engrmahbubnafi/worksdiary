@@ -22,7 +22,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'mobile' => $this->mobile,
-            'avatar' => asset('storage' . DIRECTORY_SEPARATOR . $this->avatar),
+            'avatar' => asset('storage' . DIRECTORY_SEPARATOR . str_replace('\\', '/', $this->avatar)),
             'designation' => $this->designation?->name,
             'department' => $this->department?->name,
             'company' => new CompanyResource($this->company),

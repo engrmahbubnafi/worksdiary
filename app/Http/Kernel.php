@@ -2,7 +2,6 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\APIversion;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -73,6 +72,7 @@ class Kernel extends HttpKernel
         'deny.thirdparty' => \App\Http\Middleware\DenyForThirdParty::class,
         'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
         'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
-        'api_version' => APIversion::class,
+        'api_version' => \App\Http\Middleware\APIversion::class,
+        'api.paginate_data_handle' => \App\Http\Middleware\ApiPaginateResponseHandle::class
     ];
 }

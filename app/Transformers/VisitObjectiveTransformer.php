@@ -15,6 +15,7 @@ class VisitObjectiveTransformer extends TransformerAbstract
     public function transform(VisitObjective $visitObjective): array
     {
         return [
+            'id' => (int) $visitObjective->id,
             'title' => (string) $visitObjective->title,
             'status' => (string) Str::ucfirst($visitObjective->status),
         ];

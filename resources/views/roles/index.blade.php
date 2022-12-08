@@ -73,6 +73,9 @@
                                                 <div class="menu-item px-3">
                                                     {!! Html::decode(link_to_route('roles.edit', 'Edit', [$data->id], ['class' => 'menu-link px-3'])) !!}
                                                 </div>
+                                                <div class="menu-item px-3">
+                                                    {!! Html::decode(link_to_route('roles.clone', 'Clone', [$data->id], ['class' => 'menu-link px-3'])) !!}
+                                                </div>
                                             @endif
 
                                             @if ($data->is_deletable)

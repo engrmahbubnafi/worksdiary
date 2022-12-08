@@ -15,7 +15,7 @@ class CreateFormsTable extends Migration
     {
         Schema::create('forms', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 75)->unique();
+            $table->string('name', 75);
             $table->integer('number_of_fields')->nullable();
             $table->boolean('is_multiple')->default(0);
             $table->string('time_duration_unit', 5)->default('days');
@@ -25,6 +25,7 @@ class CreateFormsTable extends Migration
             $table->boolean('is_skippable')->default(0);
             $table->timestamps();
             $table->authors();
+            $table->unique(['company_id', 'name']);
         });
     }
 

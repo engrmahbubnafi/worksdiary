@@ -64,9 +64,7 @@ class UnitTypeController extends Controller
         $html = $builder
             ->columns([
                 Column::make('id')
-                    ->title('ID')
-                    ->addClass('text-center')
-                    ->searchable(true),
+                    ->visible(false),
 
                 Column::make('name')
                     ->title('Name')
@@ -286,14 +284,15 @@ class UnitTypeController extends Controller
     public function getUnitTypesByUnit(Request $request): Collection
     {
 
-        if ($request->has('unitId')) {
-            $unitObj = CompanyUnit::where('company_units.id', $request->has('unitId'))
-                ->join('units', 'units.id', '=', 'company_units.unit_id')
+        if ($request->exists('unitId') && $request->has('unitId')) {
+            $unitObj = CompanyUnit::join('units', 'units.id', '=', 'company_units.unit_id')
                 ->select('units.unit_type_id')
-                ->first();
-            return UnitType::authUnitTypesAll((int) $unitObj->unit_type_id);
-        }
+                ->find($request->get('unitId'));
 
+            if ($unitObj) {
+                return UnitType::authUnitTypesAll((int) $unitObj->unit_type_id);
+            }
+        }
         return collect();
     }
 }

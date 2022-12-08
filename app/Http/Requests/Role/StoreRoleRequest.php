@@ -27,6 +27,7 @@ class StoreRoleRequest extends FormRequest
             "name" => "required|string|max:55|unique:roles,name",
             "description" => "required|string|max:100",
             "status" => "required",
+            "permission_ids" => "sometimes"
         ];
     }
 }

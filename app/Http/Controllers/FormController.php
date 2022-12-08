@@ -45,11 +45,14 @@ class FormController extends Controller
         }
 
         // Generate tab for each company.
-        $lists = Str::generateCompanyTab(routeName: 'forms.index');
+        $lists = Str::generateCompanyTab(routeName:'forms.index');
 
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('name')
                     ->title('Name')
                     ->addClass('text-center'),
@@ -64,8 +67,8 @@ class FormController extends Controller
                     ->searchable(false),
 
                 /**
-                 * Nafi: The plan is to make a switch for Skippable column. Currently, the work is incomplete, so, commenting for now.
-                 */
+             * Nafi: The plan is to make a switch for Skippable column. Currently, the work is incomplete, so, commenting for now.
+             */
                 // Column::make('is_skippable')
                 //     ->title('Skippable')
                 //     ->addClass('text-center'),
@@ -87,7 +90,7 @@ class FormController extends Controller
                 }',
             ]);
 
-        return view('forms.index', compact('html', 'lists'));
+        return view('forms.index', compact('html', 'lists', 'companyId'));
     }
 
     /**
@@ -112,7 +115,7 @@ class FormController extends Controller
         }
 
         // Generate tab for each company.
-        $lists = Str::generateCompanyTab(routeName: 'forms.create');
+        $lists = Str::generateCompanyTab(routeName:'forms.create');
 
         $currentCompany = $lists->where('id', $companyId)->first();
 

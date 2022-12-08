@@ -7,7 +7,11 @@
         <x-subheader-comp>
             Create Form for "{{ $currentCompany?->title }}"
             @slot('actions')
-                {!! Html::decode(link_to_route('forms.index', 'Forms', null, ['class' => 'btn btn-sm btn-light'])) !!}
+                {!! Html::decode(
+                    link_to_route('forms.index', 'Forms', auth()->user()->company_id == $companyId ? null : $companyId, [
+                        'class' => 'btn btn-sm btn-light',
+                    ]),
+                ) !!}
             @endslot
         </x-subheader-comp>
     </x-slot>

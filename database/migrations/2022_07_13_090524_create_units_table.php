@@ -17,7 +17,7 @@ class CreateUnitsTable extends Migration
             $table->increments('id');
             $table->integer('unit_type_id');
             $table->string('name', 100)->fulltext()->comment('shop name, farm name, pond name');
-            $table->string('code', 20)->nullable();
+            $table->string('code', 20)->unique()->nullable();
             $table->string('owner', 100);
             $table->boolean('as_dealer')->default(0);
             $table->string('mobile', 15)->unique();

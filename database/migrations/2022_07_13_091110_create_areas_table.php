@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('status', 15)->default('active');
             $table->timestamps();
             $table->authors();
+            $table->unique(['zone_id', 'name']);
         });
     }
 

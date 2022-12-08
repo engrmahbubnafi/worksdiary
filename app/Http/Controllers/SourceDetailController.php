@@ -30,6 +30,9 @@ class SourceDetailController extends Controller
         // Build columns
         $html = $builder
             ->columns([
+                Column::make('id')
+                    ->visible(false),
+
                 Column::make('source_id')
                     ->title('Source')
                     ->addClass('text-center'),
@@ -61,7 +64,7 @@ class SourceDetailController extends Controller
                     ->searchable(false),
             ])
             ->parameters([
-                'pageLength'   => 25,
+                'pageLength' => 25,
                 'drawCallback' => 'function() {
                     tooltipViewerFn();
                     handleSearchDatatable();
@@ -94,7 +97,7 @@ class SourceDetailController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong storing data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
@@ -122,7 +125,7 @@ class SourceDetailController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong updating data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }
@@ -138,7 +141,7 @@ class SourceDetailController extends Controller
         } catch (Throwable $th) {
             return response()->json([
                 'message' => 'Something went wrong deleting data!',
-                'error'   => [$th->getMessage()],
+                'error' => [$th->getMessage()],
             ]);
         }
     }

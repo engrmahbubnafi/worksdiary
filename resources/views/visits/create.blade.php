@@ -8,9 +8,14 @@
             New visit for "{{ $currentCompany?->title }}"
             @slot('actions')
                 {!! Html::decode(
-                    link_to_route('visits.index', '<i class="fa fa-list"></i> Visit List', $companyId, [
-                        'class' => 'btn btn-sm btn-light',
-                    ]),
+                    link_to_route(
+                        'visits.index',
+                        '<i class="fa fa-list"></i> Visit List',
+                        $companyId != auth()->user()->company_id ? $companyId : null,
+                        [
+                            'class' => 'btn btn-sm btn-light',
+                        ],
+                    ),
                 ) !!}
             @endslot
         </x-subheader-comp>
@@ -31,18 +36,18 @@
 
                 <div class="row g-9 mb-8">
                     <div class="col-md-6 fv-row">
-                        {{ Form::label('name', 'Visit Objective', [
+                        {{ Form::label('objectives', 'Visit Objective', [
                             'class' => 'required fs-6 fw-bold mb-2',
                         ]) }}
 
-                        {{ Form::select('name[]', $visitObjectives, null, [
-                            'class' => 'form-control form-control-solid' . ($errors->has('name') ? ' is-invalid' : null),
-                            //'required' => 'required',
+                        {{ Form::select('objectives[]', $visitObjectives, null, [
+                            'class' => 'form-control form-control-solid' . ($errors->has('objectives') ? ' is-invalid' : null),
+                            'required' => 'required',
                             'multiple' => 'multiple',
                             'id' => 'visitName',
                         ]) }}
 
-                        @error('name')
+                        @error('objectives')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
@@ -141,7 +146,7 @@
                     </div>
                     <div class="col-md-6 fv-row">
                         {{ Form::label('assign_to', 'Assign To', [
-                            'class' => 'required fs-6 fw-bold mb-2',
+                            'class' => 'fs-6 fw-bold mb-2',
                         ]) }}
                         <select placeholder="Select Visitor" data-control="select2"
                             class="form-select form-select-solid{{ $errors->has('assign_to') ? ' is-invalid' : null }}"
@@ -157,7 +162,9 @@
                                 {{ $message }}
                             </div>
                         @enderror
+                        <div class="form-text">For your own visit, you don't need to select anyone for assignee.</div>
                     </div>
+
                 </div>
 
                 <div class="row g-9 mb-8">

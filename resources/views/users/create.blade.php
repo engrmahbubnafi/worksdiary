@@ -5,16 +5,23 @@
 
     <x-slot name="subheader">
         <x-subheader-comp>
-            New User For Company::{{ $currentCompany }}
+            New User For Company: {{ $currentCompany }}
             @slot('actions')
-                {!! Html::decode(link_to_route('users.index', 'Users List', null, ['class' => 'btn btn-sm btn-light'])) !!}
+                {!! Html::decode(
+                    link_to_route(
+                        'users.index',
+                        '<i class="la la-list"></i> Users List',
+                        auth()->user()->company_id == $companyId ? null : $companyId,
+                        ['class' => 'btn btn-sm btn-light'],
+                    ),
+                ) !!}
             @endslot
         </x-subheader-comp>
     </x-slot>
 
     <div id="kt_content_container" class="container-xxl">
         <div class="card">
-            
+
             <x-tab-comp :lists="$lists"></x-tab-comp>
 
             <div class="card-body p-lg-15" x-data>
@@ -252,6 +259,20 @@
                     </div>
                 </div>
 
+                @if (auth()->user()->isAdministrator())
+                    <div class="fv-row mb-5">
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex align-items-center">
+                                <label class="form-check form-check-custom form-check-solid me-10">
+                                    <input name="email_verified_at" class="form-check-input h-20px w-20px"
+                                        type="checkbox" value="{{ now() }}" />
+                                    <span class="form-check-label fw-bold">With Verify Email Address</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($otherCompanies->count())
                     <div class="mb-7 text-center">
                         <h1 class="mb-3">Other Companies</h1>
@@ -274,9 +295,8 @@
                                 <div class="js-actions">
                                     <label class="form-check form-check-custom form-check-solid me-10">
                                         <input id="checkoruncheck" class="form-check-input h-20px w-20px child"
-                                            type="checkbox" name="company_ids[]"
-                                            value="{{ $key }}" onchange="checkUncheckAll(this)"
-                                            style="margin-bottom: 5px;" />
+                                            type="checkbox" name="company_ids[]" value="{{ $key }}"
+                                            onchange="checkUncheckAll(this)" style="margin-bottom: 5px;" />
                                         <span class="form-check-label fw-bold" style="padding-bottom: 5px;">
                                             {{ $element }}
                                         </span>
@@ -309,33 +329,6 @@
             });
         </script>
         <script>
-            // document.addEventListener('alpine:init', () => {
-            //     Alpine.data('alObject', () => ({
-            //         departments:[],
-            //         company_id: '{{ old("company_id") ?? "" }}',
-            //         department_id:'',
-            //         route: "{{ route('ajax.departments.getDepartmentsByCompany', 'companyId') }}",
-            //         getDepartments(departmentId) {
-            //             axios.get(
-            //                 this.route.replace('companyId', this.company_id || 0)
-            //             )
-            //             .then((res)=>{
-            //                 this.departments =res.data
-            //             })
-            //             .then(()=>{
-            //                 if(departmentId){
-            //                     this.department_id=departmentId;
-            //                 }
-            //             })
-            //         },
-            //         @if($id=old("department_id"))
-            //             init() {
-            //                 this.getDepartments('{{ $id }}');
-            //             },
-            //         @endif
-            //     }));
-            // });
-
             $(document).ready(function(e) {
                 $("#checkoruncheck").change(function() {
                     $("input:checkbox").prop('checked', $(this).prop("checked"));
